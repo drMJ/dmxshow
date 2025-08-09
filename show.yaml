@@ -1,0 +1,298 @@
+
+kinds: # fixture definitions
+  MotorizedBar:  # Motorized Bar with 8 heads and 2 motors
+    motor1: 1
+    motor1fine: 2
+    motor2: 3
+    motor2fine: 4
+    speed: 5
+    dim: 6
+    h1: 
+      red: 7
+      green: 8
+      blue: 9
+      white: 10
+    h2: 
+      red: 11
+      green: 12
+      blue: 13
+      white: 14
+    h3:
+      red: 15
+      green: 16
+      blue: 17
+      white: 18
+    h4:
+      red: 19
+      green: 20
+      blue: 21
+      white: 22
+    h5:
+      red: 23
+      green: 24
+      blue: 25
+      white: 26
+    h6:
+      red: 27
+      green: 28
+      blue: 29
+      white: 30
+    h7:
+      red: 31
+      green: 32
+      blue: 33
+      white: 34
+    h8:
+      red: 35
+      green: 36
+      blue: 37
+      white: 38
+  Par: # Par fixture with RGBW channels
+    red: 1
+    green: 2
+    blue: 3
+    white: 4
+
+fixtures: # list of fixtures used in the show
+  ML:
+    type: MotorizedBar
+    address: 1
+  Par1: 
+    type: Par
+    address: 44
+  Par2: 
+    type: Par
+    address: 48
+  Par3: 
+    type: Par
+    address: 56
+
+
+scenes:
+  - one_random_sweep: 
+      duration: 100
+      keyframes:
+        motor1_high: {ML.motor1: "random.choice([70, 80, 90, 100])"}
+        motor1_low: {ML.motor1: "random.choice([20, 30, 40, 50])"}
+        shimmer1: {ML.motor1fine: "random.randint(0, 255)"}
+        motor2_high: {ML.motor2: "random.choice([90, 100, 110, 120])"}
+        motor2_low: {ML.motor2: "random.choice([30, 40, 50, 60])"}
+      tracks:
+        init: 
+          - [{ML.speed: 255, ML.dim: 255}, 1] 
+        track1: ([kf, random.random() + 2, 'cos'] for kf in rand_sweep([ML.h1.red, ML.h2.red, ML.h3.red, ML.h4.red]))
+        track2: ([kf, random.random() + 2, 'cos'] for kf in rand_sweep([ML.h5.red, ML.h6.red, ML.h7.red, ML.h8.red]))
+        track3: ([kf, random.random() + 1, 'cos'] for kf in rand_sweep([ML.h1.white, ML.h2.white, ML.h3.white, ML.h4.white]))
+        track4: ([kf, random.random() + 1, 'cos'] for kf in rand_sweep([ML.h5.white, ML.h6.white, ML.h7.white, ML.h8.white]))
+        track5: 
+          - [motor1_high, 10]
+          - [motor1_low, 10]
+        track6: 
+          - [motor2_high, 7]
+          - [motor2_low, 7]
+        # track7: 
+        #   - [shimmer1, 2, "ramp"]
+
+    one_random_sweep_simple:
+      duration: 300
+      keyframes:
+        bk: "{6:255}"
+      tracks:
+        track0: "test_track0(keyframes)"
+        track1: "([kf, 0.5] for kf in rand_sweep([7, 11, 15, 19]))"
+        track2: "([kf, 0.3] for kf in rand_sweep([23, 27, 31, 35]))"
+
+    one_random:
+      duration: 300
+      keyframes:
+        bk: "{6:255}"
+        r1:
+          7: 255
+          11: 0
+          15: 0
+          19: 0
+        r2:
+          7: 0
+          11: 255
+          15: 0
+          19: 0
+        r3:
+          7: 0
+          11: 0
+          15: 255
+          19: 0
+        r4:
+          7: 0
+          11: 0
+          15: 0
+          19: 255
+        r5:
+          23: 255
+          27: 0
+          31: 0
+          35: 0
+        r6:
+          23: 0
+          27: 255
+          31: 0
+          35: 0
+        r7:
+          23: 0
+          27: 0
+          31: 255
+          35: 0
+        r8:
+          23: 0
+          27: 0
+          31: 0
+          35: 255
+        m1_1:
+          1: [70, 80, 90, 100]
+        m1_2:
+          1: [20, 30, 40, 50]
+        m2_1:
+          3: [90, 100, 110, 120]
+        m2_2:
+          3: [30, 40, 50, 60]
+      tracks:
+        track0: "test_track0(keyframes)"
+        track1: [[["r1", "r2", "r3", "r4"], 0.05]]
+        track2: [[["r4", "r5", "r6", "r7"], 0.03]]
+        track3:
+          - ["m1_1", 0.25]
+          - ["m1_2", 0.25]
+        track4:
+          - ["m2_1", 0.25]
+          - ["m2_2", 0.25]
+
+    any_random:
+      duration: 300
+      keyframes:
+        bk:
+          6: 255
+        r1:
+          7: [0, 255]
+          11: [0, 255]
+          15: [0, 255]
+          19: [0, 255]
+        r2:
+          23: [0, 255]
+          27: [0, 255]
+          31: [0, 255]
+          35: [0, 255]
+        m1_1:
+          1: [70, 80, 90, 100]
+        m1_2:
+          1: [20, 30, 40, 50]
+        m2_1:
+          3: [90, 100, 110, 120]
+        m2_2:
+          3: [30, 40, 50, 60]
+      tracks:
+        track0:
+          - ["bk", 5]
+        track1:
+          - ["r1", 0.1, "ramp"]
+        track2:
+          - ["r2", 0.3, "ramp"]
+        track3:
+          - ["m1_1", 0.25]
+          - ["m1_2", 0.25]
+        track4:
+          - ["m2_1", 0.25]
+          - ["m2_2", 0.25]
+
+    ordered:
+      duration: 300
+      keyframes:
+        bk:
+          6: 255
+        r1:
+          7: 255
+          11: 0
+          15: 0
+          19: 0
+        r2:
+          7: 0
+          11: 255
+          15: 0
+          19: 0
+        r3:
+          7: 0
+          11: 0
+          15: 255
+          19: 0
+        r4:
+          7: 0
+          11: 0
+          15: 0
+          19: 255
+        r5:
+          23: 255
+          27: 0
+          31: 0
+          35: 0
+        r6:
+          23: 0
+          27: 255
+          31: 0
+          35: 0
+        r7:
+          23: 0
+          27: 0
+          31: 255
+          35: 0
+        r8:
+          23: 0
+          27: 0
+          31: 0
+          35: 255
+        m1_1:
+          1: 80
+        m1_2:
+          1: 30
+        m1_3:
+          1: 90
+        m1_4:
+          1: 20
+        m2_1:
+          3: 100
+        m2_2:
+          3: 50
+        m2_3:
+          3: 70
+        m2_4:
+          3: 40
+      tracks:
+        track0:
+          - ["bk", 5]
+        track1:
+          - ["r1", 0.5]
+          - ["r2", 0.5]
+          - ["r3", 0.5]
+          - ["r4", 0.5]
+          - ["r3", 0.5]
+          - ["r2", 0.5]
+          - ["r1", 0.5]
+        track2:
+          - ["r5", 0.5]
+          - ["r6", 0.5]
+          - ["r7", 0.5]
+          - ["r8", 0.5]
+          - ["r7", 0.5]
+          - ["r6", 0.5]
+          - ["r5", 0.5]
+        track3:
+          - ["m1_1", 0.25]
+          - ["m1_2", 0.25]
+          - ["m1_3", 0.25]
+          - ["m1_4", 0.25]
+        track4:
+          - ["m2_1", 0.25]
+          - ["m2_2", 0.25]
+          - ["m2_3", 0.25]
+          - ["m2_4", 0.25]
+
+  - other:
+  
+
