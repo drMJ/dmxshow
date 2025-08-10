@@ -95,10 +95,10 @@ class DMXSequencer:
         self.locals['keyframes'] = keyframes
         while True:
             if isinstance(track_data, str):
-                track_data = eval(track_data, locals=self.locals)  # Convert string representation to actual data
+                track_data = eval(track_data, globals(), self.locals)  # Convert string representation to actual data
             for cue in track_data:
                 if isinstance(cue, str):
-                    (keyframe, duration, transition_type) = eval(cue, locals=self.locals)
+                    (keyframe, duration, transition_type) = eval(cue, globals(), self.locals)
                 else:
                     (keyframe, duration, transition_type) = self.make_cue(cue, keyframes)
 
@@ -137,7 +137,7 @@ class DMXSequencer:
     
     def make_value(self, val):
         if isinstance(val, str):
-            return eval(val, locals=self.locals)  # Convert string representation to actual data
+            return eval(val, globals(), self.locals)  # Convert string representation to actual data
         elif isinstance(val, list):
             return random.choice(val)
         return val
