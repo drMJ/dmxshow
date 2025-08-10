@@ -69,7 +69,8 @@ fixtures: # list of fixtures used in the show
 
 
 scenes:
-  - one_random_sweep: 
+  default_group:
+    one_random_sweep: 
       duration: 100
       keyframes:
         motor1_high: {ML.motor1: "random.choice([70, 80, 90, 100])"}
@@ -92,16 +93,16 @@ scenes:
           - [motor2_low, 7]
         # track7: 
         #   - [shimmer1, 2, "ramp"]
-
     one_random_sweep_simple:
       duration: 300
       keyframes:
         bk: "{6:255}"
       tracks:
-        track0: "test_track0(keyframes)"
+        track0: [[bk, 1]]
         track1: "([kf, 0.5] for kf in rand_sweep([7, 11, 15, 19]))"
         track2: "([kf, 0.3] for kf in rand_sweep([23, 27, 31, 35]))"
 
+  other_group:
     one_random:
       duration: 300
       keyframes:
@@ -293,6 +294,6 @@ scenes:
           - ["m2_3", 0.25]
           - ["m2_4", 0.25]
 
-  - other:
+
   
 

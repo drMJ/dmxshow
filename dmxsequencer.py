@@ -1,9 +1,12 @@
+import threading
 import pyenttec
 import numpy as np
 import time
 import random
 import yaml
 import argparse
+from pythonosc.dispatcher import Dispatcher
+from pythonosc.osc_server import BlockingOSCUDPServer
 
 
 def clamp(value, min_value, max_value):
@@ -43,7 +46,7 @@ class Fixture:
             setattr(self, key, value)
 
 class DMXSequencer:
-    def __init__(self, show, dmx_port='COM5', size=512):
+    def __init__(self, show, osc_port=34201, dmx_port='COM5', size=512):
         fixture_defs = show.get('fixtures', [])
         self.kinds = show.get('kinds', {})
         # instantiate the fixtures based on the kinds
@@ -52,27 +55,39 @@ class DMXSequencer:
             self.fixtures[fixture_name] = Fixture(self.kinds[fixture_def['type']], fixture_def['address'])
 
         self.locals = self.fixtures.copy()
-
         self.scenes = show.get('scenes', [])
         self.sequence = show.get('sequence', [])
         self.timestep = 0.01
+        self.active_group = list(self.scenes.keys())[0]
         self.dmx = pyenttec.DMXConnection(dmx_port, univ_size=size)
+        self.osc_dispatcher = Dispatcher()
+        self.osc_dispatcher.set_default_handler(self.osc_handler)
+        self.osc_server = BlockingOSCUDPServer(("127.0.0.1", osc_port), self.osc_dispatcher)
+        self.osc_thread = threading.Thread(target=self.osc_server.serve_forever, daemon=True)
+        self.osc_thread.start()
+
+    def osc_handler(self, addr, *args):
+        if addr == "/settings/active_group":
+            self.active_group = args[0]
 
     def run(self):
         try:
-            # while True:
-                self.play_scene(self.scenes[0]['one_random_sweep'])
+            while True:
+                group = self.active_group
+                scene_name = random.choice(list(self.scenes[group].keys()))
+                scene_data = self.scenes[group][scene_name]
+                # a scene is a collection of iterators, one for each track, that transition through the keyframes based on time and timestep
+                print(f"[{time.perf_counter()}] Playing {group}/{scene_name} for {scene_data['duration']} seconds")
+                tracks = [self.make_track(track_data, scene_data['keyframes']) for track_name, track_data in scene_data['tracks'].items()]
+                for t in np.arange(0, scene_data['duration'], self.timestep):
+                    for track in tracks:
+                        next(track, None)
+                    self.dmx.render()
+                    time.sleep(self.timestep)
+                    if self.active_group != group:
+                        break
         except KeyboardInterrupt:
             self.dmx.close()
-
-    def play_scene(self, scene_data):
-        # instantiate a scene as a collection of iterators, one for each track, that transition through the keyframes based on time and timestep
-        tracks = [self.make_track(track_data, scene_data['keyframes']) for track_name, track_data in scene_data['tracks'].items()]
-        for t in np.arange(0, scene_data['duration'], self.timestep):
-            for track in tracks:
-                next(track, None)
-            self.dmx.render()
-            time.sleep(self.timestep)
 
 
     def make_track(self, track_data, keyframes):
@@ -133,14 +148,14 @@ def run():
     # if no cmdline args, load from a known JSON file
     parser = argparse.ArgumentParser(description='Run a DMX sequencer.')
 
-    parser.add_argument('-p', '--port', type=str, default='32404', help='UDP port to use for OSC communication')
+    parser.add_argument('-p', '--port', type=int, default=34201, help='UDP port to use for OSC communication')
     parser.add_argument('-d', '--dmx', type=str, default='COM5', help='DMX port to use')
     parser.add_argument('-s', '--size', type=int, default=512, help='Total number of DMX channels, 24-512')
     parser.add_argument('-f', '--file', type=str, default='show.yaml', help='Path to the scene definition YAML file')
     args = parser.parse_args()
     with open(args.file, 'r') as f:
         show =  yaml.load(f, Loader=yaml.FullLoader)
-    seq = DMXSequencer(show, dmx_port=args.dmx, size=args.size)
+    seq = DMXSequencer(show, osc_port=args.port, dmx_port=args.dmx, size=args.size)
     seq.run()
     
 if __name__ == "__main__":
