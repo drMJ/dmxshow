@@ -169,7 +169,8 @@ class DMXSequencer:
                 # a scene is a collection of iterators, one for each track, that transition through the keyframes based on time and timestep
                 print(f"[{time.perf_counter()}] Playing {group}/{scene_name} for {scene_data['duration']} seconds")
                 tracks = [self.make_track(track_data, keyframes) for track_name, track_data in scene_data['tracks'].items()]
-                for t in np.arange(0, scene_data['duration'], self.timestep):
+                duration = self.make_value(scene_data['duration'])
+                for t in np.arange(0, duration, self.timestep):
                     for track in tracks:
                         next(track, None)
                     self.dmx.render()
@@ -224,6 +225,7 @@ class DMXSequencer:
                         target_value = {k:self.make_value(v) for k, v in target_value.items()}
                     keyframe_instance[channel] = target_value
                 #apply the transition function to each channel in the keyframe
+                duration = self.make_value(duration)
                 start_values = self.dmx.get_frame()
                 for t in np.arange(self.timestep, duration + self.timestep, self.timestep):
                     for channel, target_value in keyframe_instance.items():
