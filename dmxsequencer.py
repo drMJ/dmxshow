@@ -201,13 +201,11 @@ class DMXSequencer:
         while True:
             if isinstance(track_data, str):
                 track_data = eval(track_data, globals(), self.locals)  # Convert string representation to actual data
-            if isinstance(track_data, list):
-                track_data = {1: track_data}  # make sure the track is a dict 
-            for _, cue in track_data.items():
-                if not isinstance(cue[0], list):
-                    cue = [cue] # make sure we are dealing with a list of cues (each cue is also a list) 
-                cue = self.make_value(cue)
-                (keyframe, duration, transition_type) = self.make_cue(cue, keyframes)
+            for cue in track_data:
+                if isinstance(cue, str):
+                    (keyframe, duration, transition_type) = eval(cue, globals(), self.locals)
+                else:
+                    (keyframe, duration, transition_type) = self.make_cue(cue, keyframes)
 
                 # keyframe_def can be one of: string name of a predefined keyframe, a list of predefined key names, a dict of channel-value pairs or a string code that returns a dict
                 while not isinstance(keyframe, dict):
